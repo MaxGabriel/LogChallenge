@@ -1,0 +1,70 @@
+name:                LogParsing
+version:             0.1.0.0
+synopsis:            Log parsing challenge for Heyzap
+license:             PublicDomain
+license-file:        LICENSE
+author:              Maximilian Tagher
+maintainer:          feedback.tagher@gmail.com
+build-type:          Simple
+
+cabal-version:       >=1.10
+
+library
+  default-language: Haskell2010
+  hs-source-dirs: src
+
+  exposed-modules:   LogChallenge.Parsing
+                     LogChallenge.ChallengeMain
+
+  build-depends:       base >=4.7 && <4.8
+                     , conduit
+                     , conduit-combinators
+                     , conduit-extra
+                     , classy-prelude-conduit
+                     , classy-prelude
+                     , resourcet
+                     , raw-strings-qq
+                     , attoparsec
+                     , iproute
+                     , time
+                     , text
+                     , network-uri
+
+  default-extensions: QuasiQuotes
+                      OverloadedStrings
+                      NoImplicitPrelude
+                      GeneralizedNewtypeDeriving
+                      RecordWildCards
+
+  ghc-options: -Wall
+
+executable         LogParsing
+    hs-source-dirs:    .
+    default-language:  Haskell2010
+    main-is:           Main.hs
+    build-depends:     base
+                     , LogParsing
+                     , classy-prelude
+
+    ghc-options:       -threaded -O2 -rtsopts -with-rtsopts=-N
+
+test-suite test
+  default-language: Haskell2010
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: test.hs
+  build-depends:  base >= 4 && < 5
+                , tasty
+                , LogParsing
+                , classy-prelude
+                , hspec >= 2
+                , raw-strings-qq
+                , attoparsec
+                , network-uri
+                , iproute
+  ghc-options: -Wall
+  default-extensions: QuasiQuotes
+                      OverloadedStrings
+                      NoImplicitPrelude
+                      GeneralizedNewtypeDeriving
+                      RecordWildCards

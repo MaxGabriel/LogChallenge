@@ -1,0 +1,29 @@
+# Created by https://www.gitignore.io
+
+### Haskell ###
+dist
+cabal-dev
+*.o
+*.hi
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+.virtualenv
+.hpc
+.hsenv
+.cabal-sandbox/
+cabal.sandbox.config
+*.prof
+*.aux
+*.hp
+
+# Program specific
+output.txt
+heyzap-log-small
+conduit.hs
+conduit2.hs
+conduit3.hs
+conduit4.hs
+conduit5.hs
+heyzap-example-log
