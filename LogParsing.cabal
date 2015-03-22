@@ -15,6 +15,7 @@ library
 
   exposed-modules:   LogChallenge.Parsing
                      LogChallenge.ChallengeMain
+                     LogChallenge.Counters
 
   build-depends:       base >=4.7 && <4.8
                      , conduit
@@ -29,6 +30,9 @@ library
                      , time
                      , text
                      , network-uri
+                     , http-types
+                     , bytestring
+                     , containers
 
   default-extensions: QuasiQuotes
                       OverloadedStrings
