@@ -16,6 +16,7 @@ library
   exposed-modules:   LogChallenge.Parsing
                      LogChallenge.ChallengeMain
                      LogChallenge.Counters
+                     LogChallenge.Funnels
 
   build-depends:       base >=4.7 && <4.8
                      , conduit
