@@ -18,9 +18,6 @@ import Network.URI (URI, parseURI, uriQuery)
 import qualified Data.ByteString.Char8 as BS
 import Network.HTTP.Types.URI (parseSimpleQuery)
 
--- I should start a test suite for this, and start putting example data in there. 
--- This is way too fragile right now. 
-
 -- data Log =
 -- Change name to LogParseResult maybe? 
 -- and just make LogException 1 thing ?
@@ -46,14 +43,6 @@ data LogException = LogException deriving (Show, Eq)
 
 parseLog2 :: Parser Log
 parseLog2 = parseLog <|> parseException
-
-
-exampleLog :: Text
-exampleLog = [r|Processing HeyzapController#index (for 194.88.236.84 at 2009-07-10 06:53:28) [GET]
-  Parameters: {"back"=>"true", "embed_key"=>"12affbbace", "action"=>"index", "ajax"=>"1", "controller"=>"heyzap", "embed"=>"1"}
-Rendering template within layouts/widget_only
-Rendering heyzap/index
-Completed in 31ms (View: 22, DB: 1) | 200 OK [http://www.heyzap.com/embed?ajax=1&back=true&embed_key=12affbbace]|]
 
 parseLog :: Parser Log
 parseLog = do
@@ -162,37 +151,6 @@ parseParamPair = do
 -- | Consumes until a newline character, if one exists.
 -- skipToEndOfLine :: Parser ()
 -- skipToEndOfLine = (skipWhile (/= '\n') >> skip (== '\n')) <|> return ()
-
-exceptionLog :: Text
-exceptionLog = [r|Processing ApplicationController#index (for 84.185.219.205 at 2009-07-10 06:53:59) [GET]
-
-ActionController::RoutingError (No route matches "/heyzap/pop.mp3" with {:method=>:get, :canvas=>false}):
-  passenger (2.2.2) lib/phusion_passenger/rack/request_handler.rb:81:in `process_request'
-  passenger (2.2.2) lib/phusion_passenger/abstract_request_handler.rb:203:in `main_loop'
-  passenger (2.2.2) lib/phusion_passenger/railz/application_spawner.rb:340:in `start_request_handler'
-  passenger (2.2.2) lib/phusion_passenger/railz/application_spawner.rb:298:in `handle_spawn_application'
-  passenger (2.2.2) lib/phusion_passenger/utils.rb:181:in `safe_fork'
-  passenger (2.2.2) lib/phusion_passenger/railz/application_spawner.rb:296:in `handle_spawn_application'
-  passenger (2.2.2) lib/phusion_passenger/abstract_server.rb:337:in `__send__'
-  passenger (2.2.2) lib/phusion_passenger/abstract_server.rb:337:in `main_loop'
-  passenger (2.2.2) lib/phusion_passenger/abstract_server.rb:187:in `start_synchronously'
-  passenger (2.2.2) lib/phusion_passenger/abstract_server.rb:154:in `start'
-  passenger (2.2.2) lib/phusion_passenger/railz/application_spawner.rb:192:in `start'
-  passenger (2.2.2) lib/phusion_passenger/spawn_manager.rb:257:in `spawn_rails_application'
-  passenger (2.2.2) lib/phusion_passenger/abstract_server_collection.rb:126:in `lookup_or_add'
-  passenger (2.2.2) lib/phusion_passenger/spawn_manager.rb:251:in `spawn_rails_application'
-  passenger (2.2.2) lib/phusion_passenger/abstract_server_collection.rb:80:in `synchronize'
-  passenger (2.2.2) lib/phusion_passenger/abstract_server_collection.rb:79:in `synchronize'
-  passenger (2.2.2) lib/phusion_passenger/spawn_manager.rb:250:in `spawn_rails_application'
-  passenger (2.2.2) lib/phusion_passenger/spawn_manager.rb:153:in `spawn_application'
-  passenger (2.2.2) lib/phusion_passenger/spawn_manager.rb:282:in `handle_spawn_application'
-  passenger (2.2.2) lib/phusion_passenger/abstract_server.rb:337:in `__send__'
-  passenger (2.2.2) lib/phusion_passenger/abstract_server.rb:337:in `main_loop'
-  passenger (2.2.2) lib/phusion_passenger/abstract_server.rb:187:in `start_synchronously'
-
-Rendering /var/www/heyzap.com/releases/20090710031526/public/404.html (404 Not Found)|]
-    
-    
  
 
 -- parseIp :: Parser IPv4

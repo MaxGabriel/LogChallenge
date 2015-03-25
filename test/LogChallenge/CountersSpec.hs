@@ -9,10 +9,6 @@ import LogChallenge.Counters
 import LogChallenge.Parsing
 -- import Data.Attoparsec.Text
 
-
-frontPageLog :: LogSuccess
-frontPageLog = parsedLog1 { controller = "HomeController" }
-
 spec :: Spec
 spec = do
     describe "Counters" $ do

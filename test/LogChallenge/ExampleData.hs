@@ -1,4 +1,4 @@
-module LogChallenge.ExampleData (parsedLog1) where
+module LogChallenge.ExampleData (parsedLog1, frontPageLog) where
 
 import ClassyPrelude
 
@@ -20,3 +20,6 @@ parsedLog1 = LogSuccess
               , statusCode = 200
               , uri = fromJust $ parseURI "http://www.heyzap.com/embed?ajax=1&back=true&embed_key=12affbbace"
               }
+
+frontPageLog :: LogSuccess
+frontPageLog = parsedLog1 { controller = "HomeController" }

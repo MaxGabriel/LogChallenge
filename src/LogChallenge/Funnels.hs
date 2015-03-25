@@ -4,6 +4,7 @@ import ClassyPrelude
 import LogChallenge.Parsing
 import qualified Data.Map.Strict as Map
 import Data.IP (IPv4, toIPv4)
+import Data.Maybe (fromJust)
 
 
 
@@ -24,8 +25,50 @@ data FunnelData = FunnelData
             , userToStep :: Map IPv4 FunnelPosition
             }
 
--- updateWithLog :: LogSuccess -> FunnelData -> FunnelData
--- updateWithLog = 
+infixr 4 `orElse`
+
+-- | flipped version of @fromMaybe@.
+orElse :: Maybe a -> a -> a
+(Just x) `orElse` _ = x
+Nothing  `orElse` y = y
+
+
+showFunnelData :: FunnelData -> String
+showFunnelData funnelData = 
+    "FunnelData for "
+    ++ (funnelName (funnel funnelData))
+    ++ " is "
+    ++ (show $ funnelResults funnelData)
+
+funnelResults :: FunnelData -> [(String, Integer)]
+funnelResults funnelData =
+    map formatStep
+        $ Map.toList 
+        $ ofoldr incrementSteps Map.empty (userToStep funnelData)
+    where
+        incrementSteps :: Integer -> (Map Integer Integer) -> (Map Integer Integer)
+        incrementSteps stepInt stepMap = ofoldr (\v intMap -> incrementIndex intMap v) stepMap [stepInt - 1, (stepInt - 2)..0]
+
+        incrementIndex :: (Map Integer Integer) -> Integer -> (Map Integer Integer)
+        incrementIndex intMap idx = let oldValue = lookup idx intMap `orElse` 0
+                                    in insertMap idx (oldValue + 1) intMap
+
+        formatStep :: (Integer, Integer) -> (String, Integer)
+        formatStep (k,v) = ((stepName $ fromJust $ index (steps $ funnel funnelData) (fromIntegral k)), v)
+        
+
+
+updateFunnelWithLog :: LogSuccess -> FunnelData -> FunnelData
+updateFunnelWithLog logSuccess funnelData = 
+    let oldMap = userToStep funnelData
+        userIP = ipAddress logSuccess
+        currentStep = lookup userIP oldMap `orElse` 0
+        maybeCurrentStep = index (steps (funnel funnelData)) (fromIntegral currentStep)
+        maybeCurrentStepFn = fmap matchesLog maybeCurrentStep
+    in case maybeCurrentStepFn <*> (pure logSuccess) of
+        Just True -> funnelData { userToStep = insertMap userIP (currentStep + 1) oldMap }
+        Just False -> funnelData
+        Nothing -> funnelData
 
 initFunnelData :: Funnel -> FunnelData
 initFunnelData funnel = FunnelData funnel Map.empty 
