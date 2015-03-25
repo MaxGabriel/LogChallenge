@@ -3,7 +3,7 @@ module LogChallenge.Funnels where
 import ClassyPrelude
 import LogChallenge.Parsing
 import qualified Data.Map.Strict as Map
-import Data.IP (IPv4, toIPv4)
+import Data.IP (IPv4)
 import Data.Maybe (fromJust)
 
 
@@ -47,14 +47,14 @@ funnelResults funnelData =
         $ ofoldr incrementSteps Map.empty (userToStep funnelData)
     where
         incrementSteps :: Integer -> Map Integer Integer -> Map Integer Integer
-        incrementSteps stepInt stepMap = ofoldr (\v intMap -> incrementIndex intMap v) stepMap [stepInt - 1, (stepInt - 2)..0]
+        incrementSteps stepInt stepMap = ofoldr incrementIndex stepMap [stepInt - 1, (stepInt - 2)..0]
 
-        incrementIndex :: Map Integer Integer -> Integer -> Map Integer Integer
-        incrementIndex intMap idx = let oldValue = lookup idx intMap `orElse` 0
+        incrementIndex :: Integer -> Map Integer Integer -> Map Integer Integer
+        incrementIndex idx intMap = let oldValue = lookup idx intMap `orElse` 0
                                     in insertMap idx (oldValue + 1) intMap
 
         formatStep :: (Integer, Integer) -> (String, Integer)
-        formatStep (k,v) = ((stepName $ fromJust $ index (steps $ funnel funnelData) (fromIntegral k)), v)
+        formatStep (k,v) = (stepName $ fromJust $ index (steps $ funnel funnelData) (fromIntegral k), v)
 
 
 
@@ -105,9 +105,9 @@ developerUploadGameSimpleFunnel = Funnel "Developer Front Page (Upload Game) Fun
 
 -- Util
 
-matchesControllerAndMethod :: Text -> Text -> (LogSuccess -> Bool)
-matchesControllerAndMethod controllerName methodName = (\log -> controller log == controllerName
-                                                             && method  log == methodName)
+matchesControllerAndMethod :: Text -> Text -> LogSuccess -> Bool
+matchesControllerAndMethod controllerName methodName theLog = controller theLog == controllerName
+                                                           && method theLog == methodName
 
 developerFunnelPartial :: [FunnelStep]
 developerFunnelPartial = 
