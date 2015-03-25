@@ -36,9 +36,9 @@ Nothing  `orElse` y = y
 showFunnelData :: FunnelData -> String
 showFunnelData funnelData = 
     "FunnelData for "
-    ++ (funnelName (funnel funnelData))
+    ++ funnelName (funnel funnelData)
     ++ " is "
-    ++ (show $ funnelResults funnelData)
+    ++ show (funnelResults funnelData)
 
 funnelResults :: FunnelData -> [(String, Integer)]
 funnelResults funnelData =
@@ -46,16 +46,16 @@ funnelResults funnelData =
         $ Map.toList 
         $ ofoldr incrementSteps Map.empty (userToStep funnelData)
     where
-        incrementSteps :: Integer -> (Map Integer Integer) -> (Map Integer Integer)
+        incrementSteps :: Integer -> Map Integer Integer -> Map Integer Integer
         incrementSteps stepInt stepMap = ofoldr (\v intMap -> incrementIndex intMap v) stepMap [stepInt - 1, (stepInt - 2)..0]
 
-        incrementIndex :: (Map Integer Integer) -> Integer -> (Map Integer Integer)
+        incrementIndex :: Map Integer Integer -> Integer -> Map Integer Integer
         incrementIndex intMap idx = let oldValue = lookup idx intMap `orElse` 0
                                     in insertMap idx (oldValue + 1) intMap
 
         formatStep :: (Integer, Integer) -> (String, Integer)
         formatStep (k,v) = ((stepName $ fromJust $ index (steps $ funnel funnelData) (fromIntegral k)), v)
-        
+
 
 
 updateFunnelWithLog :: LogSuccess -> FunnelData -> FunnelData
@@ -65,7 +65,7 @@ updateFunnelWithLog logSuccess funnelData =
         currentStep = lookup userIP oldMap `orElse` 0
         maybeCurrentStep = index (steps (funnel funnelData)) (fromIntegral currentStep)
         maybeCurrentStepFn = fmap matchesLog maybeCurrentStep
-    in case maybeCurrentStepFn <*> (pure logSuccess) of
+    in case maybeCurrentStepFn <*> pure logSuccess of
         Just True -> funnelData { userToStep = insertMap userIP (currentStep + 1) oldMap }
         Just False -> funnelData
         Nothing -> funnelData

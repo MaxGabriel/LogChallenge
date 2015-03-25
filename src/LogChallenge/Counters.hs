@@ -20,17 +20,17 @@ data CounterData = CounterData
 
 showCounterData :: CounterData -> String
 showCounterData cd = "CounterData for " 
-                    ++ (name (counter cd)) 
+                    ++ name (counter cd)
                     ++ ": totalHits = " 
-                    ++ (show (totalHits cd)) 
+                    ++ show (totalHits cd)
                     ++ "; uniques count = " 
-                    ++ (show (Set.size (uniqueIPs cd)))
+                    ++ show (Set.size (uniqueIPs cd))
 
 updateWithLog :: LogSuccess -> CounterData -> CounterData
 updateWithLog log cd = let oldSet = uniqueIPs cd
                            oldHits = totalHits cd
                            ip = ipAddress log
-                           matches = matchesLog (counter cd) $ log
+                           matches = matchesLog (counter cd) log
                         in 
                             if matches then
                                 cd { totalHits = oldHits + 1, uniqueIPs = Set.insert ip oldSet }
@@ -59,7 +59,7 @@ paymentsGetItemCounter = counterForNameControllerAndMethod "Payments Get Item Pa
 
 
 counterForNameControllerAndMethod :: String -> Text -> Text -> Counter
-counterForNameControllerAndMethod name controllerName methodName = Counter name (\log -> (controller log) == controllerName && (method log) == methodName)
+counterForNameControllerAndMethod name controllerName methodName = Counter name (\log -> controller log == controllerName && method log == methodName)
 -- Ugh. The URL doesn't always have a permalink parameter, sometimes its in the path of the URL, so I need to parse out the Parameters section
 
 -- weeblyCounter :: Counter

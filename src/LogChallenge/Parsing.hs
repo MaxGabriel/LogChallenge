@@ -1,8 +1,3 @@
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE QuasiQuotes #-}
-
 module LogChallenge.Parsing (Log(..), LogException(..), LogSuccess(..), parseLog, parseException, parseLog2, uriParameters) where
 
 import Data.Attoparsec.Text
@@ -12,7 +7,6 @@ import Data.IP (IPv4, toIPv4)
 -- import Data.Time.Format (parseTime)
 -- import Data.Time.Clock (UTCTime)
 
-import Text.RawString.QQ
 import Data.Text (splitOn)
 import Network.URI (URI, parseURI, uriQuery)
 import qualified Data.ByteString.Char8 as BS
@@ -57,7 +51,7 @@ parseLog = do
     ipAddress <- takeTill' (== '(') >> "for " >> parseIp
 
     timeString <- " at " *> takeTill' (== ')')
-    let mTime = (parseTime defaultTimeLocale "%F %T" (unpack timeString)) :: Maybe UTCTime
+    let mTime = parseTime defaultTimeLocale "%F %T" (unpack timeString) :: Maybe UTCTime
     time <- case mTime of
                 Nothing -> fail "invalid date"
                 Just d -> return d

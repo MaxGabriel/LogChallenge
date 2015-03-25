@@ -14,6 +14,35 @@ import LogChallenge.Parsing
 import LogChallenge.Counters
 import LogChallenge.Funnels
 
+runChallenge :: IO ()
+runChallenge = do
+    let countersData = map initCounterData allCounters
+        funnelsData  = map initFunnelData allFunnels
+
+    countersRef <- newIORef countersData
+    funnelsRef  <- newIORef funnelsData
+
+    runResourceT
+         $ CC.sourceFile "heyzap-example-log"
+        $$ conduitParserEither splitOnTripleNewline
+        =$ filterValidParses
+        -- Parse text into records
+        =$ parseLogs
+        =$ filterLogSuccess
+        -- Analyze parsed logs
+        =$ runCounters countersRef
+        =$ runFunnels funnelsRef
+        =$ CC.sinkNull
+        -- =$ CC.map (\x -> (T.pack $ show x) ++ "\n")
+        -- =$ CC.sinkFile "output.txt"
+        
+    updatedCounters <- readIORef countersRef
+    updatedFunnels  <- readIORef funnelsRef
+    mapM_ (print . showCounterData) updatedCounters
+    mapM_ (print . showFunnelData) updatedFunnels
+
+
+
 splitOnTripleNewline :: Parser Text
 splitOnTripleNewline = do
     s <- manyTill' anyChar (eitherP (string "\n\n\n") endOfInput)
@@ -28,65 +57,26 @@ rightsC = awaitForever filterRight
         filterRight (Left _) = rightsC
         filterRight (Right x) = yield x >> rightsC
 
-printOutput :: (MonadResource m, MonadIO m) => Conduit Text m Text
-printOutput = do
-        val <- await
-        case val of
-            Nothing -> return ()
-            Just e -> do
-                liftIO $ print e
-                yield e >> printOutput
-
 parseLogs :: MonadResource m => Conduit Text m (Either String Log)
-parseLogs = CC.map (\t -> case parseOnly parseLog2 t of
-                            left@(Left _) -> (traceShow (t ++ "\n\n") left)
-                            Right l -> Right l
-                    )
+parseLogs = CC.map (parseOnly parseLog2)
 
 
 filterLogSuccess :: MonadResource m => Conduit (Either String Log) m LogSuccess
-filterLogSuccess = awaitForever $ handleLog
+filterLogSuccess = awaitForever handleLog
                    where handleLog (Right (Success x)) = yield x
                          handleLog _ = filterLogSuccess
 
-runCounters :: (MonadResource m, MonadIO m) => IORef [CounterData] -> (Conduit LogSuccess m LogSuccess) 
-runCounters counterDataRef = do
-            awaitForever $ handleLog
-              where handleLog theLog = do
-                        counterData <- liftIO $ readIORef counterDataRef
-                        let newCounters = map (\cd -> updateWithLog theLog cd) counterData 
-                        liftIO $ writeIORef counterDataRef newCounters
-                        yield theLog
+runCounters :: (MonadResource m, MonadIO m) => IORef [CounterData] -> Conduit LogSuccess m LogSuccess
+runCounters counterDataRef = awaitForever $ \theLog -> do
+                                counterData <- liftIO $ readIORef counterDataRef
+                                let newCounters = map (updateWithLog theLog) counterData 
+                                liftIO $ writeIORef counterDataRef newCounters
+                                yield theLog
 
-runFunnels :: (MonadResource m, MonadIO m) => IORef [FunnelData] -> (Conduit LogSuccess m LogSuccess)
-runFunnels funnelDataRef = do
-            awaitForever $ handleLog
-                where handleLog theLog = do
-                        funnelData <- liftIO $ readIORef funnelDataRef
-                        let newFunnels = map (\fd -> updateFunnelWithLog theLog fd) funnelData
-                        liftIO $ writeIORef funnelDataRef newFunnels
-                        yield theLog
+runFunnels :: (MonadResource m, MonadIO m) => IORef [FunnelData] -> Conduit LogSuccess m LogSuccess
+runFunnels funnelDataRef = awaitForever $ \theLog -> do
+                                funnelData <- liftIO $ readIORef funnelDataRef
+                                let newFunnels = map (updateFunnelWithLog theLog) funnelData
+                                liftIO $ writeIORef funnelDataRef newFunnels
+                                yield theLog
 
-runChallenge :: IO ()
-runChallenge = do
-    let countersData = map initCounterData allCounters
-        funnelsData  = map initFunnelData allFunnels
-    countersRef <- newIORef countersData
-    funnelsRef  <- newIORef funnelsData
-    runResourceT
-         $ CC.sourceFile "heyzap-example-log"
-        $$ conduitParserEither splitOnTripleNewline
-        =$ filterValidParses
-        -- Parse text into records
-        =$ parseLogs
-        =$ filterLogSuccess
-        -- Analyze parsed logs
-        =$ runCounters countersRef
-        =$ runFunnels funnelsRef
-        =$ CC.sinkNull
-        -- =$ CC.map (\x -> (T.pack $ show x) ++ "\n")
-        -- =$ CC.sinkFile "output.txt"
-    updatedCounters <- readIORef countersRef
-    updatedFunnels  <- readIORef funnelsRef
-    mapM_ print (map showCounterData updatedCounters)
-    mapM_ print (map showFunnelData updatedFunnels)
