@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 module LogChallenge.Counters where
 
 import ClassyPrelude
@@ -5,6 +7,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.IP (IPv4, toIPv4)
 import LogChallenge.Parsing
+import Control.DeepSeq
 
 
 data Counter = Counter
@@ -13,10 +16,12 @@ data Counter = Counter
             }
 
 data CounterData = CounterData
-                { counter :: Counter
-                , totalHits :: Integer
-                , uniqueIPs :: Set IPv4
-                }
+                { counter :: !Counter
+                , totalHits :: !Integer
+                , uniqueIPs :: !(Set IPv4)
+                } deriving Generic
+
+instance NFData CounterData
 
 showCounterData :: CounterData -> String
 showCounterData cd = "CounterData for " 
@@ -25,6 +30,15 @@ showCounterData cd = "CounterData for "
                     ++ show (totalHits cd)
                     ++ "; uniques count = " 
                     ++ show (Set.size (uniqueIPs cd))
+
+showTotalHits :: CounterData -> String
+showTotalHits cd = "CounterData for " 
+                    -- ++ name (counter cd)
+                    ++ ": totalHits = " 
+                    ++ show (totalHits cd)
+
+updateWithLog2 :: LogSuccess -> CounterData -> CounterData
+updateWithLog2 _ !cd = cd { totalHits = (totalHits cd) + 1 }
 
 updateWithLog :: LogSuccess -> CounterData -> CounterData
 updateWithLog log cd = let oldSet = uniqueIPs cd

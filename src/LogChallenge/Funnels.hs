@@ -5,7 +5,7 @@ import LogChallenge.Parsing
 import qualified Data.Map.Strict as Map
 import Data.IP (IPv4)
 import Data.Maybe (fromJust)
-
+import Control.DeepSeq
 
 
 data FunnelStep = FunnelStep
@@ -23,7 +23,9 @@ type FunnelPosition = Integer
 data FunnelData = FunnelData
             { funnel :: Funnel
             , userToStep :: Map IPv4 FunnelPosition
-            }
+            } deriving Generic
+
+instance NFData FunnelData
 
 infixr 4 `orElse`
 

@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 module LogChallenge.Parsing (Log(..), LogException(..), LogSuccess(..), parseLog, parseException, parseLog2, uriParameters) where
 
 import Data.Attoparsec.Text
@@ -19,14 +21,14 @@ data Log = Success LogSuccess | Exception LogException deriving (Show, Eq)
 
 -- And this could be 'Log' again
 data LogSuccess = LogSuccess
-        { controller :: Text -- ^ The Rails controller that handled the request (e.g. HomeController)
-        , method :: Text -- ^ The ruby method handling the request (e.g. index)
-        , ipAddress :: IPv4 -- ^ The user's IP address
-        , time :: UTCTime -- ^ The time when the request occurred
-        , httpMethod :: Text -- ^ The HTTP method used (e.g. GET, POST, etc.)
-        , completionTime :: Integer -- ^ Time to complete request in milliseconds. TODO: Get a type for milliseconds
-        , statusCode :: Integer -- ^ HTTP code returned by the server (e.g. 200)
-        , uri :: URI -- ^ URI the request was made for.
+        { controller :: !Text -- ^ The Rails controller that handled the request (e.g. HomeController)
+        , method :: !Text -- ^ The ruby method handling the request (e.g. index)
+        , ipAddress :: !IPv4 -- ^ The user's IP address
+        , time :: !UTCTime -- ^ The time when the request occurred
+        , httpMethod :: !Text -- ^ The HTTP method used (e.g. GET, POST, etc.)
+        , completionTime :: !Integer -- ^ Time to complete request in milliseconds. TODO: Get a type for milliseconds
+        , statusCode :: !Integer -- ^ HTTP code returned by the server (e.g. 200)
+        , uri :: !URI -- ^ URI the request was made for.
         } deriving (Show, Eq)
 
 uriParameters :: URI -> [(Text, Text)]
@@ -53,19 +55,23 @@ parseLog = do
     timeString <- " at " *> takeTill' (== ')')
     let mTime = parseTime defaultTimeLocale "%F %T" (unpack timeString) :: Maybe UTCTime
     time <- case mTime of
-                Nothing -> fail "invalid date"
+                Nothing -> fail "Invalid date"
                 Just d -> return d
 
     httpMethod <- " [" *> takeTill' (== ']')
 
     skipRestOfLine
 
+    -- "  Parameters: "
+
+    -- re.findall(r'\"(.*?)\"=>\"(.*?)\"',line)
+
     -- Next line: optional "Parameters" section
     -- This section escapes " as \" and newlines as \n.
     -- Thinking I should skip this part because the parameters information can be gotten from the URL (which can be parsed much easier)
     -- Sometimes rails adds "parameters" not from the URL to this section (e.g. controller and method name), so it may end up being necessary
 
-    -- Find final line
+    -- Find final line. *This part isn't necessarily for the challenge)
     _ <- manyTill anyChar (string "\nCompleted in ")
     completionTime <- decimal
     statusCode <- takeTill' (== '|') >> " " *> decimal
@@ -117,25 +123,25 @@ skipRestOfLine = skipWhile (not . isEndOfLine) >> endOfLine
 traceShowM1 :: (Show a, Monad m) => String -> a -> m ()
 traceShowM1 s a = traceM $ s ++ show a
 
-parseParams :: Parser [(Text, Text)]
-parseParams = do
+-- parseParams :: Parser [(Text, Text)]
+-- parseParams = do
 
-    params <- "  Parameters: {" *> takeTill' (== '}')
-    traceShowM1 "params are " params
-    let pairs = splitOn ", " params
-    traceShowM1 "pairs are " pairs
-    mapM (pure parseParamPair) pairs
-    -- (parseParamPair `sepBy` (string ", "))
+--     params <- "  Parameters: {" *> takeTill' (== '}')
+--     traceShowM1 "params are " params
+--     let pairs = splitOn ", " params
+--     traceShowM1 "pairs are " pairs
+--     mapM (pure parseParamPair) pairs
+--     -- (parseParamPair `sepBy` (string ", "))
     
 
-parseParamPair :: Parser (Text, Text)
-parseParamPair = do
-    key <- parseKeyOrValue
-    value <- string "=>" >> parseKeyOrValue
-    return (key, value)
-    where
-        parseKeyOrValue :: Parser Text
-        parseKeyOrValue = char '"' >> takeTill' (== '"')
+-- parseParamPair :: Parser (Text, Text)
+-- parseParamPair = do
+--     key <- parseKeyOrValue
+--     value <- string "=>" >> parseKeyOrValue
+--     return (key, value)
+--     where
+--         parseKeyOrValue :: Parser Text
+--         parseKeyOrValue = char '"' >> takeTill' (== '"')
 
 
 
